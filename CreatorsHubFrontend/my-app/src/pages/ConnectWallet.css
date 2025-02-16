@@ -1,0 +1,48 @@
+/* src/pages/ConnectWallet.css */
+
+.connect-wallet-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 80vh;
+    background-color: #f0f2f5;
+  }
+  
+  .connect-wallet-card {
+    background-color: #fff;
+    padding: 2rem;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    text-align: center;
+  }
+  
+  .title {
+    font-size: 1.5rem;
+    margin-bottom: 1rem;
+  }
+  
+  .account-info {
+    margin-top: 1rem;
+    color: #4caf50;
+  }
+  
+  .balance-info {
+    margin-top: 0.5rem;
+    color: #2196f3;
+  }
+  
+  .connect-button {
+    margin-top: 1rem;
+    background-color: #6200ea;
+    color: #fff;
+    padding: 0.75rem 1.5rem;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+  }
+  
+  .connect-button:hover {
+    background-color: #3700b3;
+  }
+  

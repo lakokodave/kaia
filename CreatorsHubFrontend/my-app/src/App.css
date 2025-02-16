@@ -1,0 +1,70 @@
+:root {
+  --dark: #121212;
+  --darker: #1e1e1e;
+  --light: #ffffff;
+  --primary: #bb86fc;
+  --primary-dark: #3700b3;
+  --success: #03dac6;
+  --success-dark: #018786;
+  --info: #03a9f4;
+  --accent: #bb86fc;
+  --accent-light: #e3baff;
+}
+
+body {
+  margin: 0;
+  font-family: 'Roboto', sans-serif;
+}
+
+.bg-dark {
+  background-color: var(--dark);
+}
+
+.bg-darker {
+  background-color: var(--darker);
+}
+
+.text-light {
+  color: var(--light);
+}
+
+.bg-primary {
+  background-color: var(--primary);
+}
+
+.bg-primary-dark {
+  background-color: var(--primary-dark);
+}
+
+.bg-success {
+  background-color: var(--success);
+}
+
+.bg-success-dark {
+  background-color: var(--success-dark);
+}
+
+.text-success {
+  color: var(--success);
+}
+
+.text-info {
+  color: var(--info);
+}
+
+.text-accent {
+  color: var(--accent);
+}
+
+.text-accent-light {
+  color: var(--accent-light);
+}
+
+button {
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+button:hover {
+  background-color: var(--primary-dark);
+}
