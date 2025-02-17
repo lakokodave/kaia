@@ -1,4 +1,3 @@
-// src/pages/NFTs.js
 import React, { useState, useEffect } from 'react';
 import Web3 from 'web3';
 import { motion } from 'framer-motion';
@@ -6,15 +5,21 @@ import SimpleNFTABI from './SimpleNFT_ABI.json';
 import './NFTs.css';
 import image4 from './images/image4.jpg';
 
+const nftContractAddress = '0x4785DC840cA06B9D24E609C5555404ec82FD8Cc4';
+
 const NFTs = () => {
   const [account, setAccount] = useState(null);
   const [nfts, setNfts] = useState([]);
   const [web3, setWeb3] = useState(null);
+  const [contract, setContract] = useState(null);
+  const [recipient, setRecipient] = useState('');
 
   useEffect(() => {
     if (window.ethereum) {
       const web3Instance = new Web3(window.ethereum);
       setWeb3(web3Instance);
+      const contractInstance = new web3Instance.eth.Contract(SimpleNFTABI, nftContractAddress);
+      setContract(contractInstance);
     } else {
       alert('MetaMask not detected');
     }
@@ -29,7 +34,6 @@ const NFTs = () => {
       const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
       if (accounts && accounts.length > 0) {
         setAccount(accounts[0]);
-        await fetchNFTs(accounts[0]);
       } else {
         console.error("No accounts available from wallet.");
       }
@@ -38,43 +42,11 @@ const NFTs = () => {
     }
   };
 
-  const fetchNFTs = async (account) => {
-    try {
-      const nftContractAddress = '0x404ADcEce67ba3380f86f36Dc852C1ec1C2208DC';
-      const nftContract = new web3.eth.Contract(SimpleNFTABI, nftContractAddress);
-      const balance = await nftContract.methods.balanceOf(account).call();
-      const nftData = [];
-
-      for (let i = 0; i < balance; i++) {
-        const tokenId = await nftContract.methods.tokenOfOwnerByIndex(account, i).call();
-        const tokenURI = await nftContract.methods.tokenURI(tokenId).call();
-        const response = await fetch(tokenURI);
-        const metadata = await response.json();
-        nftData.push({ tokenId, metadata });
-      }
-      setNfts(nftData);
-    } catch (error) {
-      console.error('Error fetching NFTs:', error);
-      // Optionally check for specific error messages
-      if (error.message && error.message.includes("LocalWalletNotAvailableError")) {
-        console.error("Local wallet not available. Please ensure your wallet is connected properly.");
-      }
-    }
-  };
-
   const buyNFT = async (nft) => {
-    if (web3 && account) {
+    if (web3 && account && contract) {
       try {
-        const recipientAddress = '0xRecipientAddress'; // Replace with actual recipient address
-        const priceInEther = '0.1'; // Example price
-
-        await web3.eth.sendTransaction({
-          from: account,
-          to: recipientAddress,
-          value: web3.utils.toWei(priceInEther, 'ether'),
-        });
-
-        alert(`Successfully purchased ${nft.metadata.name}`);
+        await contract.methods.mint(account).send({ from: account });
+        alert(`Successfully purchased ${nft.name}`);
       } catch (error) {
         console.error('Transaction failed', error);
       }
@@ -83,25 +55,30 @@ const NFTs = () => {
     }
   };
 
-  // Sample NFT data as fallback for display in grid (if you wish to show 12 NFT cards)
-  const sampleNFTData = [
-    { id: 1, name: 'NFT 1', image: 'path_to_image1.jpg', description: 'Description for NFT 1' },
-    { id: 2, name: 'NFT 2', image: 'path_to_image2.jpg', description: 'Description for NFT 2' },
-    { id: 3, name: 'NFT 3', image: 'path_to_image3.jpg', description: 'Description for NFT 3' },
-    { id: 4, name: 'NFT 4', image: {image4}, description: 'Description for NFT 4' },
-    { id: 5, name: 'NFT 5', image: 'path_to_image5.jpg', description: 'Description for NFT 5' },
-    { id: 6, name: 'NFT 6', image: 'path_to_image6.jpg', description: 'Description for NFT 6' },
-    { id: 7, name: 'NFT 7', image: 'path_to_image7.jpg', description: 'Description for NFT 7' },
-    { id: 8, name: 'NFT 8', image: 'path_to_image8.jpg', description: 'Description for NFT 8' },
-    { id: 9, name: 'NFT 9', image: 'path_to_image9.jpg', description: 'Description for NFT 9' },
-    { id: 10, name: 'NFT 10', image: 'path_to_image10.jpg', description: 'Description for NFT 10' },
-    { id: 11, name: 'NFT 11', image: 'path_to_image11.jpg', description: 'Description for NFT 11' },
-    { id: 12, name: 'NFT 12', image: 'path_to_image12.jpg', description: 'Description for NFT 12' },
-  ];
+  const sendNFT = async (nft) => {
+    if (web3 && account && recipient && contract) {
+      try {
+        await contract.methods.safeTransferFrom(account, recipient, nft.id).send({ from: account });
+        alert(`NFT ${nft.name} sent to ${recipient}`);
+      } catch (error) {
+        console.error('Transaction failed', error);
+      }
+    } else {
+      alert('Please connect your wallet and enter a valid recipient address.');
+    }
+  };
+
+  const sampleNFTData = Array.from({ length: 12 }, (_, index) => ({
+    id: index + 1,
+    name: `NFT ${index + 1}`,
+    image: image4,
+    description: `Description for NFT ${index + 1}`,
+    price: '0.1 ETH',
+    date: `2024-02-${index + 1}`
+  }));
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-gray-900 text-white">
-      {/* Section for NFTs fetched from contract */}
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -111,22 +88,13 @@ const NFTs = () => {
         <h1 className="text-2xl font-bold mb-4">Your NFTs And NFTs To Buy</h1>
         {account ? (
           <div>
-            {nfts.length > 0 ? (
-              nfts.map((nft) => (
-                <div key={nft.tokenId} className="mb-4 bg-gray-700 rounded-2xl overflow-hidden">
-                  <img src={nft.metadata.image} alt={nft.metadata.name} className="w-full h-64 object-cover" />
-                  <div className="p-4">
-                    <h2 className="text-xl font-semibold">{nft.metadata.name}</h2>
-                    <p className="mt-2 text-gray-400">{nft.metadata.description}</p>
-                    <button onClick={() => buyNFT(nft)} className="nft-buy-button">
-                      Buy NFT
-                    </button>
-                  </div>
-                </div>
-              ))
-            ) : (
-              <p className="mt-2 text-blue-400">No NFTs found in your wallet.</p>
-            )}
+            <input 
+              type="text" 
+              placeholder="Enter recipient address" 
+              value={recipient} 
+              onChange={(e) => setRecipient(e.target.value)}
+              className="mb-4 p-2 rounded text-black"
+            />
           </div>
         ) : (
           <button
@@ -138,7 +106,6 @@ const NFTs = () => {
         )}
       </motion.div>
 
-      {/* Section for sample NFT grid */}
       <div className="nft-container">
         <motion.div
           initial={{ opacity: 0, y: -20 }}
@@ -148,13 +115,24 @@ const NFTs = () => {
           style={{ height: 'min(calc(100vh - 200px), 500px)' }}
         >
           {sampleNFTData.map((nft) => (
-            <div key={nft.id} className="nft-card w-24 h-24 cursor-pointer">
-              <img
-                src={nft.image}
-                alt={nft.name}
-                className="object-cover w-full h-full rounded-lg"
-                onClick={() => buyNFT(nft)}
-              />
+            <div key={nft.id} className="nft-card w-24 h-24 cursor-pointer bg-gray-800 p-4 rounded-lg text-center">
+              <img src={nft.image} alt={nft.name} className="object-cover w-full h-24 rounded-lg mb-2" />
+              <h2 className="text-lg font-semibold">{nft.name}</h2>
+              <p className="text-sm text-gray-400">{nft.description}</p>
+              <p className="text-sm text-yellow-400">Price: {nft.price}</p>
+              <p className="text-sm text-gray-500">Date: {nft.date}</p>
+              <button 
+                onClick={() => buyNFT(nft)} 
+                className="mt-2 bg-blue-500 hover:bg-blue-400 text-white px-2 py-1 rounded"
+              >
+                Buy {nft.name}
+              </button>
+              <button 
+                onClick={() => sendNFT(nft)} 
+                className="mt-2 bg-green-500 hover:bg-green-400 text-white px-2 py-1 rounded"
+              >
+                Send {nft.name}
+              </button>
             </div>
           ))}
         </motion.div>
